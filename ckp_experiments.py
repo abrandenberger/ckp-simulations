@@ -7,8 +7,6 @@ import asyncio
 
 # Returns True if all errors have been found: all nodes are either PF or are completely True,
 # meaning the node is CT and all ancestors are CT.
-
-
 def check_G_no_errors(G, repeated_PT_nodes):
     # If any CF nodes, not all errors have been found
     CFnodes = [n for n, y in G.nodes(data=True) if y['truth_value'] == "CF"]
@@ -20,12 +18,9 @@ def check_G_no_errors(G, repeated_PT_nodes):
     for ctnode in CTnodes:
         ancestors = list(nx.descendants(G, ctnode))
         print("Ancestors: ", ancestors)
-        # CFancestors = [n for n,y in ancestors if y['truth_value'] == "CF"]
-        # PFancestors =
 
 # Returns the first time in which all errors have been eliminated (after the first 10 iterations,
 # to allow the graph to become more stable -- this decision can be changed.)
-
 
 def check_error_elimination_time(type, num_parents, p, k, epsilon=0):
     G, repeated_PT_nodes = initialize_ckp(type)
@@ -100,8 +95,6 @@ def unit_test_instantiation2(num_parents, chain_len):
     G.add_edges_from(edges)
     return G
 
-# TODO run the survival experiment for large cutoff & see how many survive
-
 async def survival_experiment(N, cutoff_num, num_pars=2, p=1.0, k=2, checking='all', draw_graph=True, type="simple"):
     '''
     Run the survival experiment N times and compute how many survive.
@@ -114,7 +107,6 @@ async def survival_experiment(N, cutoff_num, num_pars=2, p=1.0, k=2, checking='a
         stopped_iters.append(stopped_iter)
         # survived if stopped_iter == cutoff_num
         if stopped_iter >= cutoff_num and draw_graph:
-            # TODO get proportion of nodes that are PF
             draw_graph(G1, labels=False)
     num_survivals = sum(np.array(stopped_iters) >= cutoff_num)
     '''print('Setup: num parents =', num_pars, ', p = ', p,  ', k =', k,
@@ -145,7 +137,6 @@ def compute_heights(H):
     for node in H.nodes():
         path_heights.update({node: heights(H, node)})
 
-    #print("\n".join("{}\t{}".format(k, v) for k, v in path_heights.items()))
     return path_heights
     
 def exponential_potential(G, c=0.5):
@@ -156,7 +147,6 @@ def exponential_potential(G, c=0.5):
             pt_outdeg = 0
             # compute pt outdegree
             for child in G.predecessors(node):
-                #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
                 if G.nodes[child]['truth_value'] != "PF":
                     pt_outdeg += G.number_of_edges(child, node)
             dv = 1 + pt_outdeg
@@ -164,21 +154,6 @@ def exponential_potential(G, c=0.5):
             for height in path_lengths[node]:
                 sum_of_c_powers += pow(c, height)
             exponential_pot += dv * sum_of_c_powers
-
-    '''for node in G.nodes():
-        if G.nodes[node]['truth_value'] != "PF":
-            pt_outdeg = 0
-            # compute pt outdegree
-            for child in G.predecessors(node):
-                #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
-                if G.nodes[child]['truth_value'] != "PF":
-                    pt_outdeg += G.number_of_edges(child, node)
-            dv = 1 + pt_outdeg
-            #sum_of_c_powers = 0
-            minheight = min(path_lengths[node])
-            #for height in path_lengths[node]:
-                #sum_of_c_powers += pow(c, height)
-            exponential_pot += pow(c, - dv - minheight)'''
 
     print(exponential_pot)
     return exponential_pot
@@ -190,18 +165,11 @@ def small_outdeg_potential(G, k, num_parents):
             pt_outdeg = 0
             # compute pt outdegree
             for child in G.predecessors(node):
-                #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
                 if G.nodes[child]['truth_value'] != "PF":
                     pt_outdeg += G.number_of_edges(child, node)
-            #if pt_outdeg == 0:
-                #heights_of_node = heights(G, node)
-                #for height in heights_of_node:
-                #leaves_pot += 1
-                    #leaves_pot += pow(2, height)
             const = num_parents
             if pt_outdeg <= const:
                leaves_pot += 1 + const - pt_outdeg
-               #leaves_pot += 1
 
     print(leaves_pot)
     return leaves_pot
@@ -212,7 +180,6 @@ def leaves_potential(G, num_parents):
         if G.nodes[node]['truth_value'] != "PF":
             pt_outdeg = 0
             for child in G.predecessors(node):
-                #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
                 if G.nodes[child]['truth_value'] != "PF":
                     pt_outdeg += G.number_of_edges(child, node)
             if pt_outdeg == 0:
@@ -229,16 +196,13 @@ def leaves_and_parents_potential(G, num_parents):
             const = num_parents
             
             for child in G.predecessors(node):
-                #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
                 if G.nodes[child]['truth_value'] != "PF":
                     pt_outdeg += G.number_of_edges(child, node)
             if pt_outdeg == 0:
                 for parent in G.successors(node):
-                    #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
                     if G.nodes[parent]['truth_value'] != "PF":
                         pt_indeg += G.number_of_edges(parent, node)
                 
-                # + vs - no real change... so maybe pt indeg not a big contributor overall
                 pot += 1 + const - pt_indeg
 
     print(pot)
@@ -250,7 +214,6 @@ def root_to_leaf_paths_potential(G):
         if G.nodes[node]['truth_value'] != "PF":
             pt_outdeg = 0
             for child in G.predecessors(node):
-                #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
                 if G.nodes[child]['truth_value'] != "PF":
                     pt_outdeg += G.number_of_edges(child, node)
             if pt_outdeg == 0:
@@ -259,25 +222,6 @@ def root_to_leaf_paths_potential(G):
                 pot += len(path_heights)
     print(pot)
     return pot
-
-# compute the average height over all alive nodes
-'''def average_height(H):
-
-    pot = 0
-    num_alive_nodes = 0
-    path_lengths = compute_heights(H)
-    for node in H.nodes():
-        if H.nodes[node]['truth_value'] != "PF":
-            minheight = min(path_lengths[node])
-            pot += minheight
-            num_alive_nodes += 1
-
-    if num_alive_nodes == 0:
-        return 0
-    # Divide by number of alive nodes
-    pot = pot / num_alive_nodes
-    #print(pot)
-    return pot'''
 
 # compute average height weighted by the preferential attachment weights
 def average_height(H):
@@ -290,10 +234,8 @@ def average_height(H):
             minheight = min(path_lengths[node])
             pt_outdeg = 0
             for child in H.predecessors(node):
-                #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
                 if H.nodes[child]['truth_value'] != "PF":
                     pt_outdeg += H.number_of_edges(child, node)
-            #pot += pow(minheight, 10) * (pt_outdeg + 1)
             pot += minheight * (pt_outdeg + 1)
             sum_of_weights += pt_outdeg + 1
 
@@ -301,7 +243,6 @@ def average_height(H):
         return 0
     # Divide by number of alive nodes
     pot = pot / sum_of_weights
-    #print(pot)
     return pot
 
 def average_num_PT_children(H):
@@ -313,7 +254,6 @@ def average_num_PT_children(H):
         if H.nodes[node]['truth_value'] != "PF":
             pt_outdeg = 0
             for child in H.predecessors(node):
-                #if G.nodes[child]['truth_value'] == "PT" or G.nodes[child]['truth_value'] == "CT" or G.nodes[child]['truth_value'] == "CF":
                 if H.nodes[child]['truth_value'] != "PF":
                     pt_outdeg += H.number_of_edges(child, node)
             outdegree_sum += pt_outdeg
@@ -350,15 +290,11 @@ def ckp_with_potential(type, num_parents, num_iterations, p, k, epsilon=0, init=
     if draw_each_step:
         draw_graph(graphG)
     iteration_number = len(graphG)-1
-    #iteration_number = 0
-    #print("Iteration ", iteration_number)
+
     while iteration_number < num_iterations and len(repeated_PT_nodes) > 0:
-    #while iteration_number < num_iterations and len([x for x in G.nodes() if G.nodes[x]['truth_value'] != "PF"]) > 0:
-        #print("Iteration ", iteration_number)
         iteration_number += 1
         graphG, repeated_PT_nodes = update_ckp(
             graphG, iteration_number, repeated_PT_nodes, type, num_parents, p, k, epsilon, checking)
-        # TODO ADD CHECK TYPE PARAMETER to update_ckp
         if potential == 'exponential':
             potential_values += [exponential_potential(graphG)]
         elif potential == 'small-outdeg':
@@ -376,76 +312,39 @@ def ckp_with_potential(type, num_parents, num_iterations, p, k, epsilon=0, init=
     
     if len(repeated_PT_nodes) > 0:
         print('Graph survived')
-        #draw_graph(G)
     return graphG, iteration_number, potential_values
 
 def main():
-    # print('Running error elimination experiment...')
-    # check_error_elimination_time("simple", 3, 0.2, 2)
-    # check_error_elimination_time("general", 3, 0.2, 2, 0.25)
-
-    #print('*********** \nRunning error survival experiment... \n***********')
-    #survival_experiment(N=3, cutoff_num=20, num_pars=2, p=0.1, k=2, checking='all', draw_graph=False)
     '''survival_experiment(N=25, cutoff_num=2000, num_pars=2, p=0.2, k=10, checking='all', draw_graph=False)
     survival_experiment(N=25, cutoff_num=2000, num_pars=2, p=0.3, k=10, checking='all', draw_graph=False)'''
 
-    #return
-    #compute_heights(low_prob_chain(2, 10))
-    #exponential_potential(low_prob_chain(2, 10))
     p = 0.2
     k = 2
     m = 2
     G_init = low_prob_chain(m, 4)
-    #G, iternum, potential_vals = ckp_with_potential("general", m, 2000, p, k, draw_each_step=False, init=G_init, checking='random-path', potential='exponential')
     G, iternum = ckp("general", m, 200, p, k, draw_each_step=True, init=G_init, checking='random-path')
-    # plot the potential values
-    #plt.plot(potential_vals)
-    #plt.plot(list(range(1, iternum + 1)))
-    #plt.show()
-    #draw_graph(G)
 
     return
 
     G_init = low_prob_chain(m, 1)
     last_height_val = []
     p_vals = [0, 0.001, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-    #p_vals = [0, 0.001, 0.01, 0.1]
     k_vals = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     for pval in p_vals:
         print(pval)
-        #draw_graph(G_init)
         G1, iternum, pot_values = ckp_with_potential("general", m, 1000, pval, k, epsilon=0.2, draw_each_step=False, init=G_init, checking='random-path', potential='avg-height')
         
         plt.plot(pot_values)
         plt.title("Potential values")
         plt.show()
 
-        '''avg, outdeglist = average_num_PT_children(G1)  
-        plt.plot(outdeglist)
-        plt.title("Outdegree list")
-        plt.show()'''
-
         print(pot_values[len(pot_values)-1])
         last_height_val += [pot_values[len(pot_values)-1]]
         G_init.clear()
         G_init = low_prob_chain(m, 1)
-    '''for kval in k_vals:
-        print(kval)
-        #draw_graph(G_init)
-        G1, iternum, pot_values = ckp_with_potential("general", m, 500, p, kval, draw_each_step=False, init=G_init, checking='random-path', potential='avg-height')
-        plt.plot(pot_values)
-        plt.show()
-        print(pot_values[len(pot_values)-1])
-        last_height_val += [pot_values[len(pot_values)-1]]
-        G_init.clear()
-        G_init = low_prob_chain(m, 1)'''
 
     plt.plot(last_height_val)
-    #plt.axvline(x=min(k, m))
     plt.show()
-    
-
-
 
     #G_init = low_prob_chain(2, 10)
     #G1, stopped_iter = ckp("simple", 2, 250, 1, 2, init = G_init, draw_each_step=True, checking='all')
