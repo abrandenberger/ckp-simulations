@@ -1,11 +1,8 @@
 import networkx as nx
 import numpy as np
 
-# check all may have bugs
 def check_all(G, iteration_number, k, repeated_PT_nodes):
     nodes_to_set_PF = []
-    # print("Check at step ", iteration_number)
-    # Check all ancestors of distance <= k away from the new node (can change later)
     descendents_at_dist_leq_k = []
     for dist in range(0, k+1):
         descendents_at_dist_leq_k += list(
@@ -23,14 +20,12 @@ def check_all(G, iteration_number, k, repeated_PT_nodes):
                     nx.descendants_at_distance(G_reverse, node, dist))
 
             # Update the truth values for all nodes with 'node' as an descendant (remember edges are reversed, so means ancestor)
-            # and 'node_counter' (the new node) as an ancestor (remember this really means descendant). If we check not all paths
-            # this will need to be changed.
+            # and 'node_counter' (the new node) as an ancestor (recall 'ancestor' here is really a descendant).
             ancestor_and_descendant = list(
                 set(ancestors_of_node_at_dist_leq_k).intersection(descendents_at_dist_leq_k))
             nodes_to_set_PF += ancestor_and_descendant
             nodes_to_set_PF += [iteration_number]
 
-    #print("nodes_to_set_PF: ", nodes_to_set_PF)
     for node in descendents_at_dist_leq_k:
         if node in nodes_to_set_PF:
             G.nodes[node]['truth_value'] = "PF"
@@ -80,7 +75,6 @@ def check_BFS(G, startnode, k, repeated_PT_nodes, MF_nodes):
     nodes_set_PF = []
     is_visited = [False] * len(G.nodes())
     BFS_queue = []
-    #BFS_parent = [-1] * len(G.nodes())
     nodes_visited = []
 
     # Find nodes within k of start node
@@ -88,23 +82,16 @@ def check_BFS(G, startnode, k, repeated_PT_nodes, MF_nodes):
     for dist in range(0, k+1):
         BFS_possible_nodes += list(
             nx.descendants_at_distance(G, startnode, dist))
-    #print("BFS_possible_nodes", BFS_possible_nodes)
 
     # Add new node to queue (but don't visit/check it until the checks from parents) or should it be visited?
     BFS_queue.append(startnode)
     is_visited[startnode] = True # visit before or after popping? (visit is more for BFS queue, not if it's been checked...)
 
-    #check_depth = 0
-    #while check_depth <= k and BFS_queue and not false_node_found:
     while BFS_queue and not false_node_found:
-        # need to fix so that don't increase check depth each time pop a node!!
-        
         # check order of checking parents and adding parents is fine...
         node = BFS_queue.pop()
         nodes_visited.append(node)
-        #if G.nodes[node]['truth_value'] == "PF" or G.nodes[node]['truth_value'] == "CF":
         if node in MF_nodes:
-            #print("found a False node")
             false_node_found = True
             # Trace back BFS parents to mark nodes as PF
             nodes_set_PF.append(node)
@@ -133,14 +120,9 @@ def check_BFS(G, startnode, k, repeated_PT_nodes, MF_nodes):
                 if is_visited[parent] == False and parent in BFS_possible_nodes:
                     BFS_queue.append(parent)
                     is_visited[parent] = True
-                    #BFS_parent[parent] = node
-        
-        #check_depth += 1
 
     # remove duplicates for efficiency
     nodes_set_PF = list(set(nodes_set_PF))
-    #print("nodes_set_PF: ", nodes_set_PF)
-    #print("nodes visited/popped: ", nodes_visited)
     while len(nodes_set_PF) > 0:
         node = nodes_set_PF.pop()
         G.nodes[node]['truth_value'] = "PF"
@@ -156,15 +138,13 @@ def check_BFS(G, startnode, k, repeated_PT_nodes, MF_nodes):
 
 
 def check_exhaustive_BFS(G, iteration_number, p, k, repeated_PT_nodes, MF_nodes, parent_nodes):
-    # checking parent nodes in the order they connected to them. Is this ok or sort parent nodes ordering?
-    #print("New node ", iteration_number, " ------ parents ", parent_nodes[0], " and ", parent_nodes[1])
+    # checking parent nodes in the order they connected to them
     false_node_found = False
 
     for parent in parent_nodes:
         if false_node_found:
             break
         if np.random.rand() < p:
-            #print("Check parent: ", parent)
             # Check the new node. If is CF, then is in MF nodes (note that new node can't be a root when it's first created)
             if iteration_number in MF_nodes:
                 false_node_found = True
