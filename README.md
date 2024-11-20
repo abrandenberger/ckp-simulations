@@ -1,2 +1,2 @@
-# ckp-simulations
-Simulations for CKP processes
+# Simulations of CKP processes
+Code used to produce figures in [Errors are Robustly Tamed in Cumulative Knowledge Processes](https://arxiv.org/abs/2309.05638)
