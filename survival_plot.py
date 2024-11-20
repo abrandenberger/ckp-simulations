@@ -31,7 +31,6 @@ def main():
     for c in np.unique(a[:,2]):
         d = a[a[:,2] == c]
         plt.scatter(d[:,0], d[:,1], c=mapping[c][0], marker=mapping[c][1])
-        #plt.plot(d[:,0], d[:,1], color=mapping[c][0], marker=mapping[c][1])
 
     plt.show()
 
