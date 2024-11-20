@@ -19,9 +19,6 @@ def draw_graph(G, labels=True):
 
     # Compute the multipartite_layout using the "layer" node attribute
     pos = nx.multipartite_layout(G, subset_key="layer")
-    #pos = nx.random_layout(G)
-    #pos = nx.planar_layout(G)
-    #pos = nx.kamada_kawai_layout(G)
 
     ax = plt.gca()
     # Color CT nodes green, PF nodes red, CF nodes blue
@@ -116,10 +113,6 @@ def update_ckp(G, iteration_number, repeated_PT_nodes,  MF_nodes, type, num_pare
         # CHECK ONLY ONE PATH AT RANDOM
         elif checking == 'random-path':
             G, repeated_PT_nodes = check_random_path(G, iteration_number, k, repeated_PT_nodes)
-        # CHECKING paths until find a false node (if it exists)
-        #elif checking == 'check-until-false-node':
-            #path = [iteration_number]
-            # continue!!
         elif checking == 'BFS-wp-p':
             false_node_found_unused = False
             G, repeated_PT_nodes, MF_nodes, false_node_found_unused = check_BFS(G, iteration_number, k, repeated_PT_nodes, MF_nodes)
@@ -149,7 +142,6 @@ def check_parameters(num_parents, num_iterations, p, k, epsilon):
 
 
 async def ckp(type, num_parents, num_iterations, p, k, epsilon=0, init=None, draw_each_step=False, checking='all'):
-    # TODO ADD CHECK TYPE PARAMETER
     '''
     Parameters:
       type: "simple" (new node is CT) or "general" (new node is CF with probability epsilon)
@@ -170,8 +162,7 @@ async def ckp(type, num_parents, num_iterations, p, k, epsilon=0, init=None, dra
         iteration_number += 1
         G, repeated_PT_nodes, MF_nodes = update_ckp(
             G, iteration_number, repeated_PT_nodes, MF_nodes, type, num_parents, p, k, epsilon, checking)
-        # TODO ADD CHECK TYPE PARAMETER to update_ckp
-        if draw_each_step:  # and iteration_number % 10 == 0:
+        if draw_each_step: 
             draw_graph(G)
     return G, iteration_number
 
@@ -179,29 +170,10 @@ async def ckp(type, num_parents, num_iterations, p, k, epsilon=0, init=None, dra
 async def main():
     print("Creating graph")
     G_init = unit_test_instantiation2(3, 7)
-    #G_init = low_prob_chain(2, 5)
     draw_graph(G_init)
     G, repeated_PT_nodes, MF_nodes = initialize_ckp("simple", init=G_init)
-    #G, repeated_PT_nodes, MF_nodes, false_node_found = check_BFS(G, 8, 3, repeated_PT_nodes, MF_nodes)
-    #draw_graph(G)
     G, repeated_PT_nodes, MF_nodes, false_node_found= check_BFS(G, 5, 2, repeated_PT_nodes, MF_nodes)
     draw_graph(G)
-    
-    #G_init = low_prob_chain(2, 5)
-    #G1, stopped_iter = await ckp("general", 2, 50, 0.25, 3, epsilon=0.6, draw_each_step = True, init=G_init, checking='BFS-wp-p')
-    #draw_graph(G1)
-
-    # G1, stopped_iter = ckp("simple", 2, 250, 0.1, 3)
-    # draw_graph(G1)
-    # G1, stopped_iter = ckp("simple", 2, 250, 0.1, 3)
-    # draw_graph(G1)
-    # G1, stopped_iter = ckp("simple", 2, 250, 0.1, 3)
-    # draw_graph(G1)
-    # G1, stopped_iter = ckp("simple", 2, 250, 0.1, 3)
-    # draw_graph(G1)
-    # G2, stopped_iter = ckp("general", 2, 250, 0.3, 3, 0.25)
-    # draw_graph(G2)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
